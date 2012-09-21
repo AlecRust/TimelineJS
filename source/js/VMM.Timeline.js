@@ -64,7 +64,6 @@ if(typeof VMM != 'undefined' && typeof VMM.Timeline == 'undefined') {
 			timeline_id		= "#timelinejs";
 		}
 		
-		trace("VERSION " + version);
 		
 		/* CONFIG
 		================================================== */
@@ -83,6 +82,7 @@ if(typeof VMM != 'undefined' && typeof VMM.Timeline == 'undefined') {
 			touch:					false,
 			orientation: 			"normal", 
 			maptype: 				"toner",
+			version: 				"2.x", 
 			preload:				4,
 			current_slide:			0,
 			hash_bookmark:			false,
@@ -143,7 +143,8 @@ if(typeof VMM != 'undefined' && typeof VMM.Timeline == 'undefined') {
 				content: {
 					width: 			720,
 					height: 		400,
-					padding: 		130
+					padding: 		130,
+					padding_default:130
 				},
 				nav: {
 					width: 			100,
@@ -217,6 +218,9 @@ if(typeof VMM != 'undefined' && typeof VMM.Timeline == 'undefined') {
 			if (config.gmap_key != "") {
 				config.api_keys.google = config.gmap_key;
 			}
+			
+			trace("VERSION " + config.version);
+			version = config.version;
 		}
 		
 		/* CREATE TIMELINE STRUCTURE
@@ -233,11 +237,6 @@ if(typeof VMM != 'undefined' && typeof VMM.Timeline == 'undefined') {
 			$navigation	= VMM.appendAndGetElement($container, "<div>", "vco-navigation");
 			$feedback	= VMM.appendAndGetElement($timeline, "<div>", "vco-feedback", "");
 			
-			if (config.touch) {
-				VMM.Lib.addClass($timeline, "vco-touch");
-			} else {
-				VMM.Lib.addClass($timeline, "vco-notouch");
-			}
 			
 			if (typeof config.language.right_to_left != 'undefined') {
 				VMM.Lib.addClass($timeline, "vco-right-to-left");
@@ -258,6 +257,13 @@ if(typeof VMM != 'undefined' && typeof VMM.Timeline == 'undefined') {
 				VMM.Lib.height($timeline, config.height);
 			}
 			
+			if (config.touch) {
+				VMM.Lib.addClass($timeline, "vco-touch");
+			} else {
+				VMM.Lib.addClass($timeline, "vco-notouch");
+			}
+			
+			
 		}
 		
 		/* ON EVENT
@@ -265,7 +271,6 @@ if(typeof VMM != 'undefined' && typeof VMM.Timeline == 'undefined') {
 
 		function onDataReady(e, d) {
 			trace("onDataReady");
-			trace(d);
 			data = d.timeline;
 			
 			if (type.of(data.era) != "array") {
@@ -433,7 +438,8 @@ if(typeof VMM != 'undefined' && typeof VMM.Timeline == 'undefined') {
 			if (type.of(config.source) == "string" || type.of(config.source) == "object") {
 				VMM.Timeline.DataObj.getData(config.source);
 			} else {
-				VMM.Timeline.DataObj.getData(VMM.getElement(timeline_id));
+				VMM.fireEvent(global, config.events.messege, "No data source provided");
+				//VMM.Timeline.DataObj.getData(VMM.getElement(timeline_id));
 			}
 			
 			
@@ -444,10 +450,13 @@ if(typeof VMM != 'undefined' && typeof VMM.Timeline == 'undefined') {
 		};
 		
 		this.reload = function(_d) {
-			trace("loadNewDates" + _d);
+			trace("Load new timeline data" + _d);
 			VMM.fireEvent(global, config.events.messege, config.language.messages.loading_timeline);
 			data = {};
 			VMM.Timeline.DataObj.getData(_d);
+			config.current_slide = 0;
+			slider.setSlide(0);
+			timenav.setMarker(0, config.ease,config.duration);
 		};
 		
 		/* DATA 
@@ -461,10 +470,14 @@ if(typeof VMM != 'undefined' && typeof VMM.Timeline == 'undefined') {
 		
 		/* MESSEGES 
 		================================================== */
-		function showMessege(e, msg) {
+		function showMessege(e, msg, other) {
 			trace("showMessege " + msg);
-			//VMM.attachElement($messege, msg);
-			VMM.attachElement($feedback, VMM.MediaElement.loadingmessage(msg)); 
+			//VMM.attachElement($timeline, $feedback);
+			if (other) {
+				VMM.attachElement($feedback, msg);
+			} else{
+				VMM.attachElement($feedback, VMM.MediaElement.loadingmessage(msg));
+			}
 		};
 		
 		function hideMessege() {
@@ -548,12 +561,28 @@ if(typeof VMM != 'undefined' && typeof VMM.Timeline == 'undefined') {
 			config.nav.width = config.width;
 			config.feature.width = config.width;
 			
-			if (VMM.Browser.device == "mobile") {
-				//config.feature.height = config.height;
-			} else {
-				//config.feature.height = config.height - config.nav.height - 3;
-			}
 			config.feature.height = config.height - config.nav.height - 3;
+			
+			if (VMM.Browser.device == "mobile") {
+				/*
+				if (VMM.Browser.orientation == "portrait") {
+					config.feature.height	= 480;
+					config.height			= 480 + config.nav.height;
+				} else if(VMM.Browser.orientation == "landscape") {
+					config.feature.height	= 320;
+					config.height			= 320 + config.nav.height;
+				} else {
+					config.feature.height = config.height - config.nav.height - 3;
+				}
+				*/
+			}
+			
+			if (config.width < 640) {
+				VMM.Lib.addClass($timeline, "vco-skinny");
+			} else {
+				VMM.Lib.removeClass($timeline, "vco-skinny");
+			}
+			
 		};
 		
 		// BUILD DATE OBJECTS
