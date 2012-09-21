@@ -1,5 +1,11 @@
+# OS file ignores
 *.DS_Store
 .DS_Store*
+
+# IDE ignores
+.idea
+
+# Specific ignores
 dev_examples/
 cdn/
 Embed.CDN.js
